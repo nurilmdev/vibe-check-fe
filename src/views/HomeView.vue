@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "vue-router";
+import { Search, MapPin, X } from "lucide-vue-next";
 
 const router = useRouter();
 
@@ -23,6 +24,11 @@ const searchQuery = ref(""); // Menyimpan teks yang diketik user
 const limit = 10;
 const skip = ref(0);
 const hasMore = ref(true);
+
+const isRequesting = ref(false);
+const requestSuccess = ref(false);
+
+const locationQuery = ref("");
 
 // Fungsi fetch sekarang menerima parameter 'vibe'
 const fetchCafes = async (reset = false) => {
@@ -36,7 +42,9 @@ const fetchCafes = async (reset = false) => {
   try {
     // Susun URL secara dinamis. Jika ada vibe, tambahkan parameternya
     const baseUrl = import.meta.env.VITE_API_BASE_URL;
-    const url = `${baseUrl}?limit=${limit}&skip=${skip.value}${searchQuery.value ? "&vibe=" + searchQuery.value : ""}`;
+    let url = `${baseUrl}/api/cafes?limit=${limit}&skip=${skip.value}`;
+    if (searchQuery.value) url += `&vibe=${searchQuery.value}`;
+    if (locationQuery.value) url += `&location=${locationQuery.value}`;
 
     const response = await fetch(url, {
       method: "GET",
@@ -47,25 +55,53 @@ const fetchCafes = async (reset = false) => {
       },
     });
     const result = await response.json();
-    // 🚨 SABUK PENGAMAN: Pastikan API sukses dan data benar-benar ada/berbentuk Array
-    console.log("Response API:", result); // Debug: Lihat apa yang dikembalikan API
-    if (result.status === "success" && Array.isArray(result.data)) {
-      if (result.data.length < limit) {
-        hasMore.value = false;
-      }
+    let finalArray = [];
+    if (Array.isArray(result.data)) {
+      finalArray = result.data;
+    } else if (result.data && Array.isArray(result.data.data)) {
+      finalArray = result.data.data;
+    }
 
-      // Menggabungkan array dengan aman
-      cafes.value = [...cafes.value, ...result.data];
+    if (
+      finalArray.length > 0 ||
+      (finalArray.length === 0 && skip.value === 0)
+    ) {
+      if (finalArray.length < limit) hasMore.value = false;
+      cafes.value = [...cafes.value, ...finalArray];
       skip.value += limit;
     } else {
-      // Jika API error (misal salah query SQL), tangkap di sini agar layar tidak putih
-      console.error("API mengembalikan error:", result);
       hasMore.value = false;
     }
   } catch (error) {
     console.error("Gagal mengambil data:", error);
   } finally {
     isLoading.value = false;
+  }
+};
+
+const requestArea = async () => {
+  if (!locationQuery.value) return;
+
+  isRequesting.value = true;
+  try {
+    const baseUrl = import.meta.env.VITE_API_BASE_URL.replace(/\/$/, "");
+    const response = await fetch(`${baseUrl}/api/request-area`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "ngrok-skip-browser-warning": "true", // Jika masih pakai ngrok
+      },
+      body: JSON.stringify({ area_name: locationQuery.value }),
+    });
+
+    const result = await response.json();
+    if (result.status === "success") {
+      requestSuccess.value = true;
+    }
+  } catch (error) {
+    console.error("Gagal request area:", error);
+  } finally {
+    isRequesting.value = false;
   }
 };
 
@@ -76,6 +112,11 @@ const goToDetail = (id) => {
 // Fungsi yang dipanggil saat user menekan tombol cari
 const handleSearch = () => {
   fetchCafes(true);
+  requestSuccess.value = false; // Reset status request saat melakukan pencarian baru
+};
+const clearInput = () => {
+  locationQuery.value = ""; // Manually clear the specific field
+  handleSearch(); // Trigger search to refresh results
 };
 
 onMounted(() => {
@@ -93,18 +134,49 @@ onMounted(() => {
         Temukan tempat WFH atau nongkrong terbaik berdasarkan analisis AI.
       </p>
     </div>
+    <div class="max-w-2xl mx-auto mb-8 flex flex-col sm:flex-row gap-3">
+      <div class="relative flex-1">
+        <div
+          class="absolute inset-y-0 left-3 flex items-center pointer-events-none"
+        >
+          <MapPin class="h-4 w-4 text-slate-400" />
+        </div>
+        <Input
+          v-model="locationQuery"
+          @keyup.enter="handleSearch"
+          type="text"
+          placeholder="Di area mana? (Cth: Kemang, Bandung)"
+          class="pl-9 bg-white shadow-sm border-slate-200 w-full"
+        />
+        <Button
+          v-if="locationQuery"
+          type="button"
+          variant="ghost"
+          class="absolute right-2 top-2.5 h-4 w-4 p-0"
+          @click="clearInput"
+        >
+          <X class="h-4 w-4" />
+        </Button>
+      </div>
 
-    <div class="max-w-2xl mx-auto mb-8 flex gap-2">
-      <Input
-        v-model="searchQuery"
-        @keyup.enter="handleSearch"
-        type="text"
-        placeholder="Cari vibe... (Cth: wfh, skena, kopi enak)"
-        class="flex-1 bg-white shadow-sm border-slate-200"
-      />
+      <div class="relative flex-1">
+        <div
+          class="absolute inset-y-0 left-3 flex items-center pointer-events-none"
+        >
+          <Search class="h-4 w-4 text-slate-400" />
+        </div>
+        <Input
+          v-model="searchQuery"
+          @keyup.enter="handleSearch"
+          type="text"
+          placeholder="Cari vibe... (wfh, skena, estetik)"
+          class="pl-9 bg-white shadow-sm border-slate-200 w-full"
+        />
+      </div>
+
       <Button
         @click="handleSearch"
-        class="bg-slate-900 text-white hover:bg-slate-800"
+        class="bg-slate-900 text-white hover:bg-slate-800 px-8"
       >
         Cari
       </Button>
@@ -119,22 +191,51 @@ onMounted(() => {
 
     <div
       v-else-if="cafes.length === 0"
-      class="max-w-2xl mx-auto text-center py-20 bg-white rounded-xl border border-dashed border-slate-300"
+      class="max-w-2xl mx-auto text-center py-16 px-4 bg-white rounded-xl border border-slate-200 shadow-sm"
     >
-      <p class="text-slate-500 mb-4">
-        Wah, sepertinya tidak ada kafe dengan vibe "{{ searchQuery }}"
-      </p>
-      <Button
-        variant="outline"
-        @click="
-          () => {
-            searchQuery = '';
-            handleSearch();
-          }
-        "
+      <div
+        class="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4"
       >
-        Tampilkan Semua Kafe
-      </Button>
+        <span class="text-2xl">🕵️‍♂️</span>
+      </div>
+      <h3 class="text-lg font-bold text-slate-800 mb-2">
+        Area "{{ locationQuery }}"
+        <span v-if="searchQuery != 0">dengan vibe "{{ searchQuery }}"</span>
+        belum ada di database kami
+      </h3>
+      <p class="text-slate-500 mb-6 text-sm">
+        Ingin AI kami melakukan scanning dan analisis vibe untuk area ini?
+      </p>
+
+      <div
+        v-if="requestSuccess"
+        class="bg-emerald-50 text-emerald-700 p-3 rounded-lg text-sm inline-block font-medium"
+      >
+        ✅ Berhasil masuk antrean! Cek terus secara berkala ya biar nggak
+        ketinggalan update!.
+      </div>
+
+      <div v-else class="flex flex-col sm:flex-row justify-center gap-3">
+        <Button
+          @click="requestArea"
+          :disabled="isRequesting"
+          class="bg-blue-600 hover:bg-blue-700 text-white"
+        >
+          {{ isRequesting ? "Mengirim Request..." : "✨ Request Area Ini" }}
+        </Button>
+        <Button
+          variant="outline"
+          @click="
+            () => {
+              searchQuery = '';
+              locationQuery = '';
+              fetchCafes(true);
+            }
+          "
+        >
+          Tampilkan Semua Kafe
+        </Button>
+      </div>
     </div>
 
     <div v-else class="max-w-2xl mx-auto space-y-4">
