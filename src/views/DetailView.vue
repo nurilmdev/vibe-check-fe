@@ -35,11 +35,12 @@ const isReviewsLoading = ref(false);
 // State Filter
 const selectedAspect = ref("all");
 const selectedSentiment = ref("all");
+const baseUrl = import.meta.env.VITE_API_BASE_URL;
 
 // 1. Fetch Detail Kafe (Bisa menggunakan endpoint list dengan filter ID atau buat endpoint baru)
 const fetchCafeDetail = async () => {
   try {
-    const response = await fetch(`http://localhost:8000/api/cafes/${cafeId}`); // Sementara ambil dari list
+    const response = await fetch(`${baseUrl}/${cafeId}`); // Sementara ambil dari list
     const result = await response.json();
     cafe.value = result.data;
   } catch (error) {
@@ -51,7 +52,7 @@ const fetchCafeDetail = async () => {
 const fetchReviews = async () => {
   isReviewsLoading.value = true;
   try {
-    let url = `http://localhost:8000/api/cafes/${cafeId}/reviews?limit=10`;
+    let url = `${baseUrl}/${cafeId}/reviews?limit=10`;
 
     // Tambahkan parameter jika filter aktif
     if (selectedAspect.value !== "all" && selectedSentiment.value !== "all") {

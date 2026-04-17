@@ -35,7 +35,8 @@ const fetchCafes = async (reset = false) => {
 
   try {
     // Susun URL secara dinamis. Jika ada vibe, tambahkan parameternya
-    const url = `http://localhost:8000/api/cafes?limit=${limit}&skip=${skip.value}${searchQuery.value ? "&vibe=" + searchQuery.value : ""}`;
+    const baseUrl = import.meta.env.VITE_API_BASE_URL;
+    const url = `${baseUrl}?limit=${limit}&skip=${skip.value}${searchQuery.value ? "&vibe=" + searchQuery.value : ""}`;
 
     const response = await fetch(url);
     const result = await response.json();
