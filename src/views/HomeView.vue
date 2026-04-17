@@ -38,7 +38,14 @@ const fetchCafes = async (reset = false) => {
     const baseUrl = import.meta.env.VITE_API_BASE_URL;
     const url = `${baseUrl}?limit=${limit}&skip=${skip.value}${searchQuery.value ? "&vibe=" + searchQuery.value : ""}`;
 
-    const response = await fetch(url);
+    const response = await fetch(url, {
+      method: "GET",
+      headers: {
+        // 🚨 INI ADALAH KUNCI UNTUK MELEWATI LAYAR NGROK
+        "ngrok-skip-browser-warning": "true",
+        "Content-Type": "application/json",
+      },
+    });
     const result = await response.json();
     // 🚨 SABUK PENGAMAN: Pastikan API sukses dan data benar-benar ada/berbentuk Array
     console.log("Response API:", result); // Debug: Lihat apa yang dikembalikan API

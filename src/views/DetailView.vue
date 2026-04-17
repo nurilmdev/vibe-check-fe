@@ -40,7 +40,14 @@ const baseUrl = import.meta.env.VITE_API_BASE_URL;
 // 1. Fetch Detail Kafe (Bisa menggunakan endpoint list dengan filter ID atau buat endpoint baru)
 const fetchCafeDetail = async () => {
   try {
-    const response = await fetch(`${baseUrl}/${cafeId}`); // Sementara ambil dari list
+    const response = await fetch(`${baseUrl}/${cafeId}`, {
+      method: "GET",
+      headers: {
+        // 🚨 INI ADALAH KUNCI UNTUK MELEWATI LAYAR NGROK
+        "ngrok-skip-browser-warning": "true",
+        "Content-Type": "application/json",
+      },
+    });
     const result = await response.json();
     cafe.value = result.data;
   } catch (error) {
@@ -61,7 +68,14 @@ const fetchReviews = async () => {
       url += `&sentiment=${selectedSentiment.value}`;
     }
 
-    const response = await fetch(url);
+    const response = await fetch(url, {
+      method: "GET",
+      headers: {
+        // 🚨 INI ADALAH KUNCI UNTUK MELEWATI LAYAR NGROK
+        "ngrok-skip-browser-warning": "true",
+        "Content-Type": "application/json",
+      },
+    });
     const result = await response.json();
     reviews.value = result.data;
   } catch (error) {
