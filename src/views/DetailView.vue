@@ -230,9 +230,9 @@ onMounted(async () => {
                       : "Kritik"
                   }}
                 </Badge>
-                <span class="text-[10px] text-slate-400 font-mono">{{
+                <!-- <span class="text-[10px] text-slate-400 font-mono">{{
                   rev.review_id.substring(0, 8)
-                }}</span>
+                }}</span> -->
               </div>
               <p
                 class="text-slate-800 text-sm leading-relaxed italic font-semibold"

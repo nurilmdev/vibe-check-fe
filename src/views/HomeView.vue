@@ -1,3 +1,8 @@
+<script>
+export default {
+  name: "HomeView",
+};
+</script>
 <script setup>
 import { ref, onMounted } from "vue";
 
@@ -13,13 +18,14 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "vue-router";
-import { Search, MapPin, X } from "lucide-vue-next";
+import { Search, MapPin, X, AlertCircle } from "lucide-vue-next";
 
 const router = useRouter();
 
 const cafes = ref([]);
 const isLoading = ref(true);
 const searchQuery = ref(""); // Menyimpan teks yang diketik user
+const isErrorApi = ref(false);
 
 const limit = 10;
 const skip = ref(0);
@@ -55,6 +61,9 @@ const fetchCafes = async (reset = false) => {
       },
     });
     const result = await response.json();
+    if (result.status === "success") {
+      requestSuccess.value = true;
+    }
     let finalArray = [];
     if (Array.isArray(result.data)) {
       finalArray = result.data;
@@ -73,6 +82,7 @@ const fetchCafes = async (reset = false) => {
       hasMore.value = false;
     }
   } catch (error) {
+    isErrorApi.value = true;
     console.error("Gagal mengambil data:", error);
   } finally {
     isLoading.value = false;
@@ -170,7 +180,7 @@ onMounted(() => {
           @keyup.enter="handleSearch"
           type="text"
           placeholder="Cari vibe... (wfh, skena, estetik)"
-          class="pl-9 bg-white shadow-sm border-slate-200 w-full"
+          class="pl-9 bg-slate-800 shadow-sm border-slate-800 w-full"
         />
       </div>
 
@@ -182,7 +192,10 @@ onMounted(() => {
       </Button>
     </div>
 
-    <div v-if="isLoading" class="flex justify-center items-center py-20">
+    <div
+      v-if="isLoading && cafes.length === 0"
+      class="flex justify-center items-center py-20"
+    >
       <div class="animate-pulse flex flex-col items-center">
         <div class="h-12 w-12 bg-slate-200 rounded-full mb-4"></div>
         <div class="text-slate-400">Menganalisis data kafe...</div>
@@ -190,7 +203,7 @@ onMounted(() => {
     </div>
 
     <div
-      v-else-if="cafes.length === 0"
+      v-else-if="cafes.length === 0 && !isLoading && !isErrorApi"
       class="max-w-2xl mx-auto text-center py-16 px-4 bg-white rounded-xl border border-slate-200 shadow-sm"
     >
       <div
@@ -237,6 +250,12 @@ onMounted(() => {
         </Button>
       </div>
     </div>
+    <div
+      v-else-if="!requestSuccess"
+      class="max-w-2xl mx-auto text-center py-16 px-4 bg-white rounded-xl border border-slate-200 shadow-sm"
+    >
+      <p class="text-slate-900 mb-6 text-lg font-bold">Error Server API :(</p>
+    </div>
 
     <div v-else class="max-w-2xl mx-auto space-y-4">
       <Card
@@ -257,7 +276,7 @@ onMounted(() => {
         <CardHeader class="pb-3">
           <div class="flex justify-between items-start">
             <div>
-              <CardTitle class="text-xl font-semibold">{{
+              <CardTitle class="text-xl font-semibold text-slate-300">{{
                 cafe.name
               }}</CardTitle>
               <CardDescription
@@ -270,22 +289,30 @@ onMounted(() => {
 
             <div>
               <div class="text-right">
-                <span class="text-xs text-slate-500 block mb-1"
-                  >Skor Sentimen</span
-                >
-                <span
-                  class="text-lg font-bold"
-                  :class="
-                    cafe.sentiment_analytics >= 0.8
-                      ? 'text-emerald-600'
-                      : 'text-slate-700'
-                  "
-                >
-                  {{ Math.round(cafe.sentiment_analytics * 100) }}%
-                </span>
+                <div v-if="cafe.sentiment_analytics != null">
+                  <span class="text-xs text-slate-500 block mb-1"
+                    >Skor Sentimen</span
+                  >
+                  <span
+                    class="text-lg font-bold"
+                    :class="
+                      cafe.sentiment_analytics >= 0.8
+                        ? 'text-emerald-600'
+                        : 'text-slate-700'
+                    "
+                  >
+                    {{ Math.round(cafe.sentiment_analytics * 100) }}%
+                  </span>
+                </div>
+                <div v-else>
+                  <span class="text-xs text-slate-600 block mb-2"
+                    >Not Analyzed</span
+                  >
+                </div>
+
                 <div
                   v-if="cafe.image_url"
-                  class="flex-none overflow-hidden rounded-lg bg-slate-100 border border-slate-200"
+                  class="flex-none overflow-hidden rounded-lg bg-slate-100 border border-slate-900"
                   style="width: 111px; height: 84px"
                 >
                   <img
@@ -304,7 +331,7 @@ onMounted(() => {
               v-for="tag in cafe.vibe_tags"
               :key="tag"
               variant="secondary"
-              class="bg-slate-100 text-slate-700 hover:bg-slate-200 font-normal"
+              class="bg-slate-300 text-slate-900 hover:bg-slate-200 font-normal"
             >
               {{ tag }}
             </Badge>
@@ -317,7 +344,7 @@ onMounted(() => {
           @click="fetchCafes(false)"
           :disabled="isLoading"
         >
-          {{ isLoading ? "Memuat..." : "Tampilkan Lebih Banyak" }}
+          {{ isLoading ? "Memuat data baru..." : "Tampilkan Lebih Banyak" }}
         </Button>
       </div>
     </div>
