@@ -254,7 +254,10 @@ onMounted(() => {
       v-else-if="!requestSuccess"
       class="max-w-2xl mx-auto text-center py-16 px-4 bg-white rounded-xl border border-slate-200 shadow-sm"
     >
-      <p class="text-slate-900 mb-6 text-lg font-bold">Error Server API :(</p>
+      <p class="text-slate-800 mb-6 text-lg font-bold">Error Server API :(</p>
+      <p class="text-slate-400 mb-6 text-sm font-normal">
+        TF Developer dong biar bisa sewa server sendiri hehe
+      </p>
     </div>
 
     <div v-else class="max-w-2xl mx-auto space-y-4">
