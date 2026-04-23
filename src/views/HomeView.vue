@@ -181,7 +181,6 @@ onMounted(() => {
           type="text"
           placeholder="Cari vibe... (wfh, skena, estetik)"
           class="pl-9 bg-white shadow-sm border-slate-200 w-full"
-          class="pl-9 bg-slate-800 shadow-sm border-slate-800 w-full"
         />
       </div>
 
@@ -278,7 +277,6 @@ onMounted(() => {
           <div class="flex justify-between items-start">
             <div>
               <CardTitle class="text-xl font-semibold">{{
-              <CardTitle class="text-xl font-semibold text-slate-300">{{
                 cafe.name
               }}</CardTitle>
               <CardDescription
@@ -315,7 +313,6 @@ onMounted(() => {
                 <div
                   v-if="cafe.image_url"
                   class="flex-none overflow-hidden rounded-lg bg-slate-100 border border-slate-200"
-                  class="flex-none overflow-hidden rounded-lg bg-slate-100 border border-slate-900"
                   style="width: 111px; height: 84px"
                 >
                   <img
