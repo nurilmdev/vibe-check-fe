@@ -1,10 +1,10 @@
 <script>
 export default {
-  name: "HomeView",
+  name: 'HomeView',
 };
 </script>
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, onMounted } from 'vue';
 
 // Import komponen Shadcn (Sekarang ada Input dan Button!)
 import {
@@ -13,18 +13,18 @@ import {
   CardTitle,
   CardDescription,
   CardContent,
-} from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { useRouter } from "vue-router";
-import { Search, MapPin, X, AlertCircle } from "lucide-vue-next";
+} from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { useRouter } from 'vue-router';
+import { Search, MapPin, X, AlertCircle } from 'lucide-vue-next';
 
 const router = useRouter();
 
 const cafes = ref([]);
 const isLoading = ref(true);
-const searchQuery = ref(""); // Menyimpan teks yang diketik user
+const searchQuery = ref(''); // Menyimpan teks yang diketik user
 const isErrorApi = ref(false);
 
 const limit = 10;
@@ -33,8 +33,9 @@ const hasMore = ref(true);
 
 const isRequesting = ref(false);
 const requestSuccess = ref(false);
+const requestAreaSuccess = ref(false);
 
-const locationQuery = ref("");
+const locationQuery = ref('');
 
 // Fungsi fetch sekarang menerima parameter 'vibe'
 const fetchCafes = async (reset = false) => {
@@ -53,15 +54,15 @@ const fetchCafes = async (reset = false) => {
     if (locationQuery.value) url += `&location=${locationQuery.value}`;
 
     const response = await fetch(url, {
-      method: "GET",
+      method: 'GET',
       headers: {
         // 🚨 INI ADALAH KUNCI UNTUK MELEWATI LAYAR NGROK
-        "ngrok-skip-browser-warning": "true",
-        "Content-Type": "application/json",
+        'ngrok-skip-browser-warning': 'true',
+        'Content-Type': 'application/json',
       },
     });
     const result = await response.json();
-    if (result.status === "success") {
+    if (result.status === 'success') {
       requestSuccess.value = true;
     }
     let finalArray = [];
@@ -83,7 +84,7 @@ const fetchCafes = async (reset = false) => {
     }
   } catch (error) {
     isErrorApi.value = true;
-    console.error("Gagal mengambil data:", error);
+    console.error('Gagal mengambil data:', error);
   } finally {
     isLoading.value = false;
   }
@@ -94,38 +95,39 @@ const requestArea = async () => {
 
   isRequesting.value = true;
   try {
-    const baseUrl = import.meta.env.VITE_API_BASE_URL.replace(/\/$/, "");
+    const baseUrl = import.meta.env.VITE_API_BASE_URL.replace(/\/$/, '');
     const response = await fetch(`${baseUrl}/api/request-area`, {
-      method: "POST",
+      method: 'POST',
       headers: {
-        "Content-Type": "application/json",
-        "ngrok-skip-browser-warning": "true", // Jika masih pakai ngrok
+        'Content-Type': 'application/json',
+        'ngrok-skip-browser-warning': 'true', // Jika masih pakai ngrok
       },
       body: JSON.stringify({ area_name: locationQuery.value }),
     });
 
     const result = await response.json();
-    if (result.status === "success") {
-      requestSuccess.value = true;
+    if (result.status === 'success') {
+      requestAreaSuccess.value = true;
     }
   } catch (error) {
-    console.error("Gagal request area:", error);
+    console.error('Gagal request area:', error);
   } finally {
     isRequesting.value = false;
   }
 };
 
 const goToDetail = (id) => {
-  router.push({ name: "detail", params: { id } });
+  router.push({ name: 'detail', params: { id } });
 };
 
 // Fungsi yang dipanggil saat user menekan tombol cari
 const handleSearch = () => {
   fetchCafes(true);
   requestSuccess.value = false; // Reset status request saat melakukan pencarian baru
+  console.log(requestSuccess.value);
 };
 const clearInput = () => {
-  locationQuery.value = ""; // Manually clear the specific field
+  locationQuery.value = ''; // Manually clear the specific field
   handleSearch(); // Trigger search to refresh results
 };
 
@@ -210,6 +212,7 @@ onMounted(() => {
         class="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4"
       >
         <span class="text-2xl">🕵️‍♂️</span>
+        <span class="text-2xl">{{ requestAreaSuccess }}</span>
       </div>
       <h3 class="text-lg font-bold text-slate-800 mb-2">
         Area "{{ locationQuery }}"
@@ -221,7 +224,7 @@ onMounted(() => {
       </p>
 
       <div
-        v-if="requestSuccess"
+        v-if="requestAreaSuccess"
         class="bg-emerald-50 text-emerald-700 p-3 rounded-lg text-sm inline-block font-medium"
       >
         ✅ Berhasil masuk antrean! Cek terus secara berkala ya biar nggak
@@ -234,7 +237,7 @@ onMounted(() => {
           :disabled="isRequesting"
           class="bg-blue-600 hover:bg-blue-700 text-white"
         >
-          {{ isRequesting ? "Mengirim Request..." : "✨ Request Area Ini" }}
+          {{ isRequesting ? 'Mengirim Request...' : '✨ Request Area Ini' }}
         </Button>
         <Button
           variant="outline"
@@ -347,7 +350,7 @@ onMounted(() => {
           @click="fetchCafes(false)"
           :disabled="isLoading"
         >
-          {{ isLoading ? "Memuat data baru..." : "Tampilkan Lebih Banyak" }}
+          {{ isLoading ? 'Memuat data baru...' : 'Tampilkan Lebih Banyak' }}
         </Button>
       </div>
     </div>
