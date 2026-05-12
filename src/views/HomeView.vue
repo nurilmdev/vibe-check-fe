@@ -110,7 +110,6 @@ const requestArea = async () => {
       requestAreaSuccess.value = true;
     }
   } catch (error) {
-    console.error('Gagal request area:', error);
   } finally {
     isRequesting.value = false;
   }
@@ -212,7 +211,6 @@ onMounted(() => {
         class="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4"
       >
         <span class="text-2xl">🕵️‍♂️</span>
-        <span class="text-2xl">{{ requestAreaSuccess }}</span>
       </div>
       <h3 class="text-lg font-bold text-slate-800 mb-2">
         Area "{{ locationQuery }}"
