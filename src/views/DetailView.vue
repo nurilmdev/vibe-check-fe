@@ -46,6 +46,7 @@ const fetchCafeDetail = async () => {
         // 🚨 INI ADALAH KUNCI UNTUK MELEWATI LAYAR NGROK
         'ngrok-skip-browser-warning': 'true',
         'Content-Type': 'application/json',
+        'X-API-KEY': import.meta.env.VITE_API_KEY,
       },
     });
     const result = await response.json();
@@ -74,6 +75,7 @@ const fetchReviews = async () => {
         // 🚨 INI ADALAH KUNCI UNTUK MELEWATI LAYAR NGROK
         'ngrok-skip-browser-warning': 'true',
         'Content-Type': 'application/json',
+        'X-API-KEY': import.meta.env.VITE_API_KEY,
       },
     });
     const result = await response.json();

@@ -62,6 +62,7 @@ const fetchCafes = async (reset = false) => {
         // 🚨 INI ADALAH KUNCI UNTUK MELEWATI LAYAR NGROK
         'ngrok-skip-browser-warning': 'true',
         'Content-Type': 'application/json',
+        'X-API-KEY': import.meta.env.VITE_API_KEY,
       },
     });
     const result = await response.json();
@@ -104,6 +105,7 @@ const requestArea = async () => {
       headers: {
         'Content-Type': 'application/json',
         'ngrok-skip-browser-warning': 'true', // Jika masih pakai ngrok
+        'X-API-KEY': import.meta.env.VITE_API_KEY,
       },
       body: JSON.stringify({ area_name: locationQuery.value }),
     });
