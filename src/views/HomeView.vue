@@ -37,6 +37,7 @@ const hasMore = ref(true);
 const isRequesting = ref(false);
 const requestSuccess = ref(false);
 const requestAreaSuccess = ref(false);
+const rateLimitError = ref('');
 
 const locationQuery = ref('');
 
@@ -62,9 +63,18 @@ const fetchCafes = async (reset = false) => {
         // 🚨 INI ADALAH KUNCI UNTUK MELEWATI LAYAR NGROK
         'ngrok-skip-browser-warning': 'true',
         'Content-Type': 'application/json',
+        'X-API-KEY': import.meta.env.VITE_API_KEY,
       },
     });
+
+    if (response.status === 429) {
+      rateLimitError.value =
+        'Tunggu sebentar, Anda melakukan terlalu banyak request. Silakan coba lagi nanti.';
+      throw new Error('Rate limited');
+    }
+
     const result = await response.json();
+    rateLimitError.value = ''; // Reset jika berhasil
     if (result.status === 'success') {
       requestSuccess.value = true;
     }
@@ -104,11 +114,19 @@ const requestArea = async () => {
       headers: {
         'Content-Type': 'application/json',
         'ngrok-skip-browser-warning': 'true', // Jika masih pakai ngrok
+        'X-API-KEY': import.meta.env.VITE_API_KEY,
       },
       body: JSON.stringify({ area_name: locationQuery.value }),
     });
 
+    if (response.status === 429) {
+      rateLimitError.value =
+        'Tunggu sebentar, Anda melakukan terlalu banyak request. Silakan coba lagi nanti.';
+      throw new Error('Rate limited');
+    }
+
     const result = await response.json();
+    rateLimitError.value = ''; // Reset jika berhasil
     if (result.status === 'success') {
       requestAreaSuccess.value = true;
     }
@@ -204,6 +222,15 @@ onMounted(() => {
       >
         <component :is="isDark ? Sun : Moon" class="h-4 w-4" />
       </Button>
+    </div>
+
+    <!-- Rate Limit Error Banner -->
+    <div
+      v-if="rateLimitError"
+      class="max-w-2xl mx-auto mb-4 flex items-center gap-3 bg-red-50 border border-red-200 text-red-700 rounded-xl p-4 dark:bg-red-900/30 dark:border-red-800 dark:text-red-300"
+    >
+      <AlertCircle class="h-5 w-5 flex-shrink-0" />
+      <p class="text-sm font-medium">{{ rateLimitError }}</p>
     </div>
 
     <div

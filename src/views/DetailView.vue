@@ -7,6 +7,7 @@ import {
   MessageSquare,
   Star,
   MapPin,
+  AlertCircle,
 } from 'lucide-vue-next';
 
 // Import Shadcn Components
@@ -31,6 +32,7 @@ const cafe = ref(null);
 const reviews = ref([]);
 const isLoading = ref(true);
 const isReviewsLoading = ref(false);
+const rateLimitError = ref('');
 
 // State Filter
 const selectedAspect = ref('all');
@@ -46,9 +48,18 @@ const fetchCafeDetail = async () => {
         // 🚨 INI ADALAH KUNCI UNTUK MELEWATI LAYAR NGROK
         'ngrok-skip-browser-warning': 'true',
         'Content-Type': 'application/json',
+        'X-API-KEY': import.meta.env.VITE_API_KEY,
       },
     });
+
+    if (response.status === 429) {
+      rateLimitError.value =
+        'Tunggu sebentar, Anda melakukan terlalu banyak request. Silakan coba lagi nanti.';
+      throw new Error('Rate limited');
+    }
+
     const result = await response.json();
+    rateLimitError.value = '';
     cafe.value = result.data;
   } catch (error) {
     console.error('Gagal ambil detail:', error);
@@ -74,9 +85,18 @@ const fetchReviews = async () => {
         // 🚨 INI ADALAH KUNCI UNTUK MELEWATI LAYAR NGROK
         'ngrok-skip-browser-warning': 'true',
         'Content-Type': 'application/json',
+        'X-API-KEY': import.meta.env.VITE_API_KEY,
       },
     });
+
+    if (response.status === 429) {
+      rateLimitError.value =
+        'Tunggu sebentar, Anda melakukan terlalu banyak request. Silakan coba lagi nanti.';
+      throw new Error('Rate limited');
+    }
+
     const result = await response.json();
+    rateLimitError.value = '';
     reviews.value = result.data;
   } catch (error) {
     console.error('Gagal ambil ulasan:', error);
@@ -123,6 +143,14 @@ onMounted(async () => {
     </nav>
 
     <main class="max-w-2xl mx-auto p-4 space-y-6" v-if="!isLoading && cafe">
+      <!-- Rate Limit Error Banner -->
+      <div
+        v-if="rateLimitError"
+        class="flex items-center gap-3 bg-red-50 border border-red-200 text-red-700 rounded-xl p-4 dark:bg-red-900/30 dark:border-red-800 dark:text-red-300"
+      >
+        <AlertCircle class="h-5 w-5 flex-shrink-0" />
+        <p class="text-sm font-medium">{{ rateLimitError }}</p>
+      </div>
       <section
         class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 dark:bg-gray-800 dark:border-gray-700"
       >
