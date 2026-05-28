@@ -4,7 +4,7 @@ export default {
 };
 </script>
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 
 // Import komponen Shadcn (Sekarang ada Input dan Button!)
 import {
@@ -18,7 +18,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useRouter } from 'vue-router';
-import { Search, MapPin, X, AlertCircle, Sun, Moon } from 'lucide-vue-next';
+import { Search, MapPin, X, AlertCircle, Sun, Moon, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-vue-next';
 import { inject } from 'vue';
 
 const { isDark, toggleTheme } = inject('theme');
@@ -40,6 +40,27 @@ const requestAreaSuccess = ref(false);
 const rateLimitError = ref('');
 
 const locationQuery = ref('');
+const sortOrder = ref(''); // '' = no sort, 'desc' = terbanyak, 'asc' = tersedikit
+
+// Computed: sorted cafes berdasarkan total_review_gmaps
+const sortedCafes = computed(() => {
+  if (!sortOrder.value) return cafes.value;
+  return [...cafes.value].sort((a, b) => {
+    console.log("masuk kondisi 2")
+    const aVal = a.total_reviews_gmaps || 0;
+    const bVal = b.total_reviews_gmaps || 0;
+    return sortOrder.value === 'desc' ? bVal - aVal : aVal - bVal;
+  });
+});
+
+const toggleSort = () => {
+  console.log("toggle sort clicked")
+  console.log(sortOrder.value)
+  console.log(sortedCafes.value)
+  if (sortOrder.value === '') sortOrder.value = 'desc';
+  else if (sortOrder.value === 'desc') sortOrder.value = 'asc';
+  else sortOrder.value = '';
+};
 
 // Fungsi fetch sekarang menerima parameter 'vibe'
 const fetchCafes = async (reset = false) => {
@@ -325,8 +346,29 @@ onMounted(() => {
     </div>
 
     <div v-else class="max-w-2xl mx-auto space-y-4">
+      <!-- Sort Button -->
+      <div class="flex items-center justify-end">
+        <Button
+          variant="outline"
+          @click="toggleSort"
+          class="gap-2 text-sm bg-white shadow-sm border-slate-200 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:hover:bg-gray-600"
+        >
+          <component
+            :is="sortOrder === 'desc' ? ArrowDown : sortOrder === 'asc' ? ArrowUp : ArrowUpDown"
+            class="h-4 w-4"
+          />
+          {{
+            sortOrder === 'desc'
+              ? 'Review Terbanyak'
+              : sortOrder === 'asc'
+                ? 'Review Tersedikit'
+                : 'Urutkan Review'
+          }}
+        </Button>
+      </div>
+
       <Card
-        v-for="cafe in cafes"
+        v-for="cafe in sortedCafes"
         :key="cafe.id"
         @click="goToDetail(cafe.id)"
         class="cursor-pointer transition-all hover:border-slate-400 hover:shadow-lg bg-white dark:bg-gray-800 dark:border-gray-700 dark:hover:border-gray-500"
@@ -351,6 +393,12 @@ onMounted(() => {
                 class="mt-1 flex items-center text-amber-600 dark:text-amber-400"
               >
                 ★ {{ cafe.rating }} / 5.0
+                <span
+                  v-if="cafe.total_reviews_gmaps"
+                  class="ml-2 text-slate-500 dark:text-gray-400"
+                >
+                  ({{ cafe.total_reviews_gmaps }} ulasan)
+                </span>
               </CardDescription>
             </div>
 
